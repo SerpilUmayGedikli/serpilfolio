@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://serpilumaygedikli.github.io/serpilfolio/sitemap.xml
