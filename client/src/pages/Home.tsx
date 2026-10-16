@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   ArrowRight,
@@ -131,7 +131,15 @@ function SectionKicker({ number, children }: { number: string; children: React.R
 
 function ProjectCard({ project }: { project: Project }) {
   return (
-    <article className={`project-card accent-${project.accent}`}>
+    <article
+      className={`project-card reveal accent-${project.accent}`}
+      data-reveal="card"
+      onPointerMove={(event) => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        event.currentTarget.style.setProperty("--spot-x", `${event.clientX - rect.left}px`);
+        event.currentTarget.style.setProperty("--spot-y", `${event.clientY - rect.top}px`);
+      }}
+    >
       <div className="project-card-top">
         <span className="project-index">{project.index}</span>
         <ArrowUpRight size={20} strokeWidth={1.6} aria-hidden="true" />
@@ -155,6 +163,32 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [projectFilter, setProjectFilter] = useState<"Tümü" | ProjectCategory>("Tümü");
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const updatePointer = (event: PointerEvent) => {
+      root.style.setProperty("--pointer-x", `${event.clientX}px`);
+      root.style.setProperty("--pointer-y", `${event.clientY}px`);
+    };
+    window.addEventListener("pointermove", updatePointer, { passive: true });
+
+    const revealItems = document.querySelectorAll<HTMLElement>("[data-reveal]");
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      }),
+      { threshold: 0.12 },
+    );
+    revealItems.forEach((item) => observer.observe(item));
+
+    return () => {
+      window.removeEventListener("pointermove", updatePointer);
+      observer.disconnect();
+    };
+  }, []);
 
   const filteredProjects = useMemo(
     () => projectFilter === "Tümü" ? projects : projects.filter((project) => project.category === projectFilter),
@@ -199,7 +233,7 @@ export default function Home() {
       </header>
 
       <main id="top">
-        <section className="hero page-section" aria-labelledby="hero-title">
+        <section className="hero page-section reveal is-visible" data-reveal="hero" aria-labelledby="hero-title">
           <div className="hero-copy">
             <div className="status-line"><span className="status-dot" /> 2026 / Ankara, Türkiye <span className="status-slash">//</span> available for meaningful problems</div>
             <h1 id="hero-title">Güvenilir AI sistemleri, <em>ölçülebilir</em> sonuçlara dönüşsün.</h1>
@@ -235,7 +269,7 @@ export default function Home() {
           <div className="metric"><span className="metric-value">3.27<span>/4</span></span><span className="metric-label">B.Sc. GPA · Ankara University</span></div>
         </section>
 
-        <section className="about-section page-section" id="about" aria-labelledby="about-title">
+        <section className="about-section page-section reveal" data-reveal="section" id="about" aria-labelledby="about-title">
           <div className="section-intro">
             <SectionKicker number="01">Profil</SectionKicker>
             <h2 id="about-title">Model prototipinden önce <span>ölçüm.</span></h2>
@@ -250,7 +284,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="experience-section page-section" id="experience" aria-labelledby="experience-title">
+        <section className="experience-section page-section reveal" data-reveal="section" id="experience" aria-labelledby="experience-title">
           <div className="section-intro split-intro">
             <SectionKicker number="02">Deneyim</SectionKicker>
             <span className="section-meta">hands-on / AI &amp; backend</span>
@@ -283,7 +317,7 @@ export default function Home() {
             <div><SectionKicker number="03">Seçilmiş çalışmalar</SectionKicker><h2 id="work-title">İşe yarayan <span>araştırma.</span></h2></div>
             <p className="section-description">Her proje, daha güvenilir bir sistem kurmak için farklı bir soruyu araştırıyor.</p>
           </div>
-          <article className="featured-project">
+          <article className="featured-project reveal" data-reveal="featured">
             <div className="featured-project-visual">
               <div className="scan-map" aria-hidden="true"><span className="scan-ring ring-a" /><span className="scan-ring ring-b" /><span className="scan-ring ring-c" /><span className="scan-path path-a" /><span className="scan-path path-b" /><span className="scan-target" /></div>
               <span className="visual-label label-top">FC2.8 / CANDIDATE GENERATION</span><span className="visual-label label-bottom">3T MRI · patient-space · QC</span>
@@ -301,17 +335,17 @@ export default function Home() {
           <div className="projects-grid">{filteredProjects.map((project) => <ProjectCard key={project.title} project={project} />)}</div>
         </section>
 
-        <section className="skills-section page-section" id="skills" aria-labelledby="skills-title">
+        <section className="skills-section page-section reveal" data-reveal="section" id="skills" aria-labelledby="skills-title">
           <div className="section-intro split-intro"><div><SectionKicker number="04">Araç seti</SectionKicker><h2 id="skills-title">Sistemin her <span>katmanı.</span></h2></div><p className="section-description">Araştırma, gözlemleme ve teslim arasında bağ kuran teknik bir çalışma seti.</p></div>
           <div className="skills-layout"><div className="skills-grid">{skillGroups.map((group) => { const Icon = group.icon; return <article className="skill-group" key={group.title}><div className="skill-heading"><Icon size={19} /><h3>{group.title}</h3></div><div className="skill-pills">{group.items.map((item) => <span key={item}>{item}</span>)}</div></article>; })}</div><aside className="skills-aside"><div className="aside-code"><span>01</span><code>if (system.is_uncertain)&#10;  return abstain();</code></div><p>İyi bir sistem yalnızca doğru cevap vermez; belirsizliği de anlaşılır biçimde taşır.</p><span className="aside-signature">— SG / engineering notes</span></aside></div>
         </section>
 
-        <section className="education-section page-section" aria-labelledby="education-title">
+        <section className="education-section page-section reveal" data-reveal="section" aria-labelledby="education-title">
           <div className="education-card"><div className="education-symbol"><Layers3 size={24} /></div><div><SectionKicker number="05">Eğitim</SectionKicker><h2 id="education-title">B.Sc. Artificial Intelligence<br /><span>&amp; Data Engineering</span></h2><p>Ankara University · Faculty of Engineering</p></div><div className="education-meta"><span>Aug 2022 – Jun 2026</span><strong>GPA <b>3.27</b> / 4.00</strong></div></div>
           <div className="achievement-card"><div className="achievement-mark">★</div><div><p className="eyebrow">Achievement / 2026</p><h3>TEKNOFEST Oncology</h3><p>Risk-Aware Biopsy Planning projesiyle finalist.</p></div><ArrowUpRight size={20} /></div>
         </section>
 
-        <section className="contact-section page-section" id="contact" aria-labelledby="contact-title">
+        <section className="contact-section page-section reveal" data-reveal="section" id="contact" aria-labelledby="contact-title">
           <div className="contact-copy"><SectionKicker number="06">İletişim</SectionKicker><h2 id="contact-title">Bir sonraki anlamlı problemi <em>birlikte</em> inceleyelim.</h2><p>AI sistemleri, evaluation süreçleri veya araştırma fikirleri üzerine konuşmak için bana ulaşın.</p></div>
           <div className="contact-actions"><a className="contact-email" href="mailto:srplgdkl@gmail.com"><Mail size={19} /> srplgdkl@gmail.com <ArrowUpRight size={17} /></a><button className="copy-button" type="button" onClick={copyEmail}>{copied ? <><Check size={16} /> kopyalandı</> : <><Copy size={16} /> e-postayı kopyala</>}</button><div className="social-links"><a href="https://github.com/SerpilUmayGedikli" target="_blank" rel="noreferrer"><Github size={18} /> GitHub <ExternalLink size={13} /></a><a href="https://www.linkedin.com/in/serpil-umaygedikli-442b31207" target="_blank" rel="noreferrer"><Linkedin size={18} /> LinkedIn <ExternalLink size={13} /></a></div></div>
           <div className="contact-footer-note"><MapPin size={15} /> Ankara, Türkiye <span>//</span> Turkish native · English B1</div>
