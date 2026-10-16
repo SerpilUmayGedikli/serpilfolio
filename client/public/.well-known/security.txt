@@ -1,0 +1,4 @@
+Contact: mailto:srplgdkl@gmail.com
+Preferred-Languages: tr, en
+Expires: 2027-10-16T00:00:00.000Z
+Canonical: /.well-known/security.txt
